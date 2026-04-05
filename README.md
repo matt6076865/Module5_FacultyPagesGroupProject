@@ -7,6 +7,7 @@ This project is a simple HTML prototype based on faculty webpage mockups.
 - `index.html` - faculty home page
 - `edit.html` - faculty edit page
 - `style.css` - shared styles for both pages
+- 'images/' - holds the images used for the profile picture
 
 ## Project Purpose
 
