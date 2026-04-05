@@ -4,10 +4,11 @@ This project is a simple HTML prototype based on faculty webpage mockups.
 
 ## Files Included
 
-- `index.html` - faculty home page
-- `edit.html` - faculty edit page
-- `style.css` - shared styles for both pages
-- 'images/' - holds the images used for the profile picture
+- `faculty-page-project/index.html` - faculty home page  
+- `faculty-page-project/edit.html` - faculty edit page  
+- `faculty-page-project/style.css` - shared styles  
+- `images/` - contains profile pictures and image assets  
+- `Faculty Info Pages Wireframes.pdf` - design mockups  
 
 ## Project Purpose
 
@@ -20,10 +21,11 @@ This prototype demonstrates:
 
 ## How to Use
 
-1. Download or clone the project folder.
-2. Open `index.html` in a web browser.
-3. Use the navigation links to move between the Home and Edit pages.
+1. Download or clone the project folder  
+2. Open `faculty-page-project/index.html` in a web browser  
+3. Use the navigation links to move between the Home and Edit pages 
 
 ## Notes
 
-This project focuses on structure and design rather than advanced functionality. It is intended to support a faculty web presence assignment and can be uploaded to GitHub as a basic prototype.
+- All HTML files are located inside the `faculty-page-project` folder  
+- Make sure image paths are correctly linked from the `images/` folder  
