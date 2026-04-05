@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Faculty Edit Page</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="page-container">
+
+    <header class="site-header">
+      <div class="header-top">
+        <p class="faculty-label">Faculty Name - Instructors</p>
+        <p class="site-url">https://instructors.spcollege.edu/</p>
+      </div>
+
+      <div class="top-bar">
+      <div></div>
+
+      <nav class="main-nav">
+        <a href="index.html">Home</a>
+        <a href="#">Admin</a>
+        <a href="edit.html" class="active">Edit</a>
+      </nav>
+
+      <div></div>
+     </div>
+    </header>
+
+<main class="edit-page">
+  <div class="edit-layout">
+
+    <!-- LEFT SIDE (FORM + PROFILE PIC) -->
+    <section class="form-panel">
+      <form class="faculty-form">
+
+        <!-- PROFILE IMAGE MOVED HERE -->
+        <section class="profile-image-editor">
+          <h2>Profile Picture</h2>
+
+          <div class="image-preview-box">
+            <span>Profile Image Preview</span>
+          </div>
+
+          <label for="profile-image">Upload / Change Profile Picture</label>
+          <input
+            type="file"
+            id="profile-image"
+            name="profile-image"
+            accept="image/*"
+          />
+        </section>
+
+        <!-- NAME -->
+        <div class="row">
+          <div class="field full-width">
+            <label for="name">Name</label>
+            <input type="text" id="name" name="name" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="title">Title</label>
+            <input type="text" id="title" name="title" />
+          </div>
+
+          <div class="field">
+            <label for="campus">Campus</label>
+            <input type="text" id="campus" name="campus" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="department">Department</label>
+            <input type="text" id="department" name="department" />
+          </div>
+
+          <div class="field">
+            <label for="office-location">Office Location</label>
+            <input type="text" id="office-location" name="office-location" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" />
+          </div>
+
+          <div class="field">
+            <label for="office-phone">Office Phone</label>
+            <input type="text" id="office-phone" name="office-phone" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field full-width">
+            <label for="office-hours">Office Hours</label>
+            <input type="text" id="office-hours" name="office-hours" />
+          </div>
+        </div>
+
+        
+
+        <button type="submit" class="save-btn">Save Changes</button>
+      </form>
+    </section>
+
+    <!-- RIGHT SIDE (TEXT AREAS ONLY) -->
+    <section class="content-editor">
+      <section class="editor-section">
+        <h2>About Me</h2>
+        <textarea rows="6">Enter Text</textarea>
+      </section>
+
+      <section class="editor-section">
+        <h2>Education</h2>
+        <textarea rows="6">Enter Text</textarea>
+      </section>
+
+      <section class="editor-section">
+        <h2>Research / Publications</h2>
+        <textarea rows="6">Enter Text</textarea>
+      </section>
+     
+      <fieldset class="checkbox-group courses-box">
+       <legend>Courses Taught:</legend>
+       
+       <div class="courses-header">  
+         <span>Select All That Apply</span>   	
+         <span class="dropdown-arrow">▼</span>
+       </div>
+
+       <div class="courses-grid">
+         <label><input type="checkbox" /> COP 1000</label>
+         <label><input type="checkbox" /> COP 1044</label>
+
+         <label><input type="checkbox" /> COP 3505</label>
+         <label><input type="checkbox" /> COP 4504</label>
+
+         <label><input type="checkbox" /> ISM 3212</label>
+         <label><input type="checkbox" /> ISM 3232</label>
+
+         <label><input type="checkbox" /> ISM 4914</label>
+         <label><input type="checkbox" /> ISM 4915</label>
+      </div>
+    </fieldset>
+    </section>
+
+  </div>
+</main>
+
+  </div>
+</body>
+</html>
