@@ -15,18 +15,30 @@ body {
   background-color: #ffffff;
   min-height: 100vh;
   padding: 0 20px 30px;
+  border-style: solid;
+  border-width: 5px;
 }
 
 /* -------------------- */
 /* HEADER               */
 /* -------------------- */
 .site-header {
-  padding-top: 20px;
   border-bottom: 1px solid #d6d6d6;
+  padding-top: 10px;
+  width: 100%;
 }
 
 .header-top {
   margin-bottom: 20px;
+  height: 75px;
+  border: 3px solid #d29f2a;
+}
+
+.header-top img {
+  height: 90%;
+  width: 200px;
+  margin: auto;
+  padding: 5px;
 }
 
 .faculty-label {
