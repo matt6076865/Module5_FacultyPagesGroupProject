@@ -10,18 +10,29 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
-# Database configuration from environment variables
+# Database configuration — host falls back to Railway's private service domain
+# so the app can reach MySQL even when MYSQL_HOST is not explicitly injected.
 db_config = {
-    'host': os.getenv('MYSQL_HOST', 'localhost'),
+    'host': os.getenv('MYSQL_HOST', 'mysql.railway.internal'),
     'user': os.getenv('MYSQL_USER', 'root'),
     'password': os.getenv('MYSQL_PASSWORD', ''),
-    'database': os.getenv('MYSQL_DATABASE', 'faculty_portal'),
+    'database': os.getenv('MYSQL_DATABASE', 'railway'),
     'connection_timeout': 10,
     'connect_timeout': 10,
 }
 
+# Log the effective connection string at startup (password masked for safety)
+_masked = '*' * len(db_config['password']) if db_config['password'] else '(empty)'
+print(
+    f"[db_config] host={db_config['host']}  user={db_config['user']}  "
+    f"password={_masked}  database={db_config['database']}"
+)
+
 def get_db_connection():
-    print(f"Connecting to MySQL at {db_config['host']} as {db_config['user']}...")
+    print(
+        f"Connecting to MySQL at {db_config['host']} "
+        f"(db={db_config['database']}) as {db_config['user']}..."
+    )
     conn = mysql.connector.connect(**db_config)
     print("MySQL connection established.")
     return conn
