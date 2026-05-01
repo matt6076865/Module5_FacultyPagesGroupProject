@@ -179,6 +179,8 @@
   </div>
 
   <script>
+    console.log('[edit.html] Script loaded — attaching form submit listener...');
+
     // Load current faculty data into the form on page load
     async function loadFacultyData() {
       try {
@@ -210,8 +212,15 @@
     }
 
     // Handle form submission
-    document.getElementById('faculty-form').addEventListener('submit', async function (e) {
+    const facultyForm = document.getElementById('faculty-form');
+    if (facultyForm) {
+      console.log('[edit.html] Submit listener attached to #faculty-form');
+    } else {
+      console.error('[edit.html] ERROR: #faculty-form not found in DOM — submit listener NOT attached');
+    }
+    facultyForm && facultyForm.addEventListener('submit', async function (e) {
       e.preventDefault();
+      console.log('[edit.html] Form submit intercepted — sending fetch POST to /api/faculty');
 
       const payload = {
         name: document.getElementById('name').value.trim(),
