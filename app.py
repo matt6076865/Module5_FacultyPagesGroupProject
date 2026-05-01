@@ -10,12 +10,12 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
-# Database configuration from environment variables
+# Database configuration from environment variables (no defaults — must be injected)
 db_config = {
-    'host': os.getenv('MYSQL_HOST', 'localhost'),
-    'user': os.getenv('MYSQL_USER', 'root'),
-    'password': os.getenv('MYSQL_PASSWORD', ''),
-    'database': os.getenv('MYSQL_DATABASE', 'faculty_portal'),
+    'host': os.getenv('MYSQL_HOST'),
+    'user': os.getenv('MYSQL_USER'),
+    'password': os.getenv('MYSQL_PASSWORD'),
+    'database': os.getenv('MYSQL_DATABASE'),
     'connection_timeout': 10,
     'connect_timeout': 10,
 }
@@ -168,6 +168,17 @@ def update_faculty():
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5000))
     print(f"Starting Faculty Portal on port {port}...")
-    print(f"MySQL host: {db_config['host']}, database: {db_config['database']}")
+
+    # Validate that all required MySQL environment variables are present
+    required_vars = ['MYSQL_HOST', 'MYSQL_USER', 'MYSQL_PASSWORD', 'MYSQL_DATABASE']
+    missing_vars = [var for var in required_vars if not os.getenv(var)]
+    if missing_vars:
+        print(f"ERROR: Missing required environment variables: {', '.join(missing_vars)}")
+        print("The app cannot connect to MySQL without these variables. Exiting.")
+        raise SystemExit(1)
+
+    print(f"MySQL host: {db_config['host']}, user: {db_config['user']}, "
+          f"password: {'*' * len(db_config['password'])}, database: {db_config['database']}")
+
     init_db()
     app.run(host='0.0.0.0', port=port, debug=False)
