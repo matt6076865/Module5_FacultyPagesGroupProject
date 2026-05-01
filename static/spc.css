@@ -1,0 +1,29 @@
+/* blue #0f426f */
+/* dark blue #042c51 */
+/* gold #d29f2a */
+/* light green #89bc40 */
+
+body {
+  background-color: #042c51;
+}
+
+.header-top {
+  background-color: #0f426f;
+}
+
+#header {
+  background-color: #0f426f;
+  border: 3px solid #d29f2a;
+}
+
+.page-container {
+  border-color: #d29f2a;
+}
+
+.profile-img {
+  content: url("/static/images/matt-watkins.jpg");
+}
+
+.header-logo {
+  content: url("/static/images/spc-logo.png");
+}

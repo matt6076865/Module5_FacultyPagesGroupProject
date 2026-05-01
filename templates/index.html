@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Faculty Information Page</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+  <link rel="stylesheet" href="/static/style.css" />
+  <link rel="stylesheet" href="/static/spc.css" />
+</head>
+
+<body>
+  <div class="page-container">
+    <header class="site-header">
+
+    <div class="d-flex flex-wrap justify-content-center py-2 mb-4 " id="header">
+      <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto link-body-emphasis text-decoration-none">
+        <svg class="bi me-2" width="40" height="32" aria-hidden="true"><use xlink:href="#bootstrap"></use></svg>
+        <span class="fs-4"><img src="" class="header-logo" alt=""></span> 
+      </a> 
+    </div>
+
+  <div class="top-bar">
+    <div></div>
+
+    <nav class="main-nav" aria-label="Primary navigation">
+      <a class="active" href="/">Home</a>
+      <a href="#">Admin</a>
+      <a href="/edit">Edit</a>
+    </nav>
+
+    <form class="search-form" action="#" method="get">
+      <input id="faculty-search" type="search" placeholder="Faculty Search" />
+    </form>
+  </div>
+</header>
+
+    <main class="home-page">
+  <div class="home-layout">
+
+    <aside class="profile-panel">
+    <div class="profile-image-box">
+      <img src="/static/images/user-female.png" alt="Faculty Profile Image" class="profile-img"
+           onerror="this.onerror=null;this.src='/images/user-female.png';" />
+    </div>
+
+      <h1 id="faculty-name">Loading...</h1>
+
+      <div class="info-group">
+        <h2>Title</h2>
+        <p id="faculty-title">—</p>
+      </div>
+
+      <div class="info-group">
+        <h2>Campus Location</h2>
+        <p id="faculty-campus">—</p>
+      </div>
+
+      <div class="info-group">
+        <h2>Department</h2>
+        <p id="faculty-department">—</p>
+      </div>
+
+      <div class="info-group">
+        <h2>Office Location</h2>
+        <p id="faculty-office-location">—</p>
+      </div>
+
+      <div class="info-group">
+        <h2>Email &amp; Office Phone</h2>
+        <p id="faculty-contact">—</p>
+      </div>
+
+      <div class="info-group">
+        <h2>Office Schedule</h2>
+        <p id="faculty-schedule">—</p>
+      </div>
+
+      <div class="faculty-actions">
+        <a href="#" class="action-btn">Office Appointments</a>
+        <a href="#" class="action-btn">Course Info</a>
+      </div>
+    </aside>
+
+    <section class="main-content">
+      <section class="content-section">
+        <h2>About Me</h2>
+        <p id="faculty-about">—</p>
+      </section>
+
+      <section class="content-section">
+        <h2>Education</h2>
+        <p id="faculty-education">—</p>
+      </section>
+
+      <section class="content-section">
+        <h2>Research / Publications</h2>
+        <p id="faculty-research">—</p>
+      </section>
+    </section>
+  </div>
+
+  <section class="syllabus-section">
+    <h2>Syllabus Links</h2>
+    <p>
+      Course syllabi are made available at the discretion of the faculty and may require  <br>
+      you to log in; if a syllabus isn't accessible, the 
+      instructor may not have published it yet.
+    </p>
+
+    <div class="course-buttons">
+      <a href="#" class="course-btn">COP 1000</a>
+      <a href="#" class="course-btn">COP 1044</a>
+      <a href="#" class="course-btn">COP 3505</a>
+      <a href="#" class="course-btn">COP 4504</a>
+      <a href="#" class="course-btn">ISM 3212</a>
+      <a href="#" class="course-btn">ISM 3232</a>
+      <a href="#" class="course-btn">ISM 4914</a>
+      <a href="#" class="course-btn">ISM 4915</a>
+    </div>
+  </section>
+</main>
+  </div>
+
+  <script>
+    async function loadFacultyData() {
+      try {
+        const response = await fetch('/api/faculty');
+        if (!response.ok) {
+          throw new Error(`HTTP error: ${response.status}`);
+        }
+        const data = await response.json();
+
+        if (data.error) {
+          throw new Error(data.error);
+        }
+
+        document.getElementById('faculty-name').textContent = data.name || '—';
+        document.getElementById('faculty-title').textContent = data.title || '—';
+        document.getElementById('faculty-campus').textContent = data.campus_location || '—';
+        document.getElementById('faculty-department').textContent = data.department || '—';
+        document.getElementById('faculty-office-location').textContent = data.office_location || '—';
+        document.getElementById('faculty-schedule').textContent = data.office_schedule || '—';
+        document.getElementById('faculty-about').textContent = data.about_me || '—';
+        document.getElementById('faculty-education').textContent = data.education || '—';
+        document.getElementById('faculty-research').textContent = data.research || '—';
+
+        const email = data.email || '';
+        const phone = data.phone || '';
+        if (email && phone) {
+          document.getElementById('faculty-contact').textContent = `${email} | ${phone}`;
+        } else {
+          document.getElementById('faculty-contact').textContent = email || phone || '—';
+        }
+      } catch (err) {
+        console.error('Failed to load faculty data:', err);
+        document.getElementById('faculty-name').textContent = 'Unable to load data';
+      }
+    }
+
+    loadFacultyData();
+  </script>
+</body>
+</html>

@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Faculty Edit Page</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+  <link rel="stylesheet" href="/static/style.css" />
+  <link rel="stylesheet" href="/static/spc.css" />
+  <style>
+    .status-message {
+      padding: 12px 16px;
+      border-radius: 6px;
+      margin-top: 16px;
+      font-size: 0.95rem;
+      display: none;
+    }
+    .status-message.success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .status-message.error {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+
+    <header class="site-header">
+    <div class="d-flex flex-wrap justify-content-center py-2 mb-4 " id="header">
+      <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto link-body-emphasis text-decoration-none">
+        <svg class="bi me-2" width="40" height="32" aria-hidden="true"><use xlink:href="#bootstrap"></use></svg>
+        <span class="fs-4"><img src="" class="header-logo" alt=""></span> 
+      </a> 
+    </div>
+
+      <div class="top-bar">
+      <div></div>
+
+      <nav class="main-nav">
+        <a href="/">Home</a>
+        <a href="#">Admin</a>
+        <a href="/edit" class="active">Edit</a>
+      </nav>
+
+      <div></div>
+     </div>
+    </header>
+
+<main class="edit-page">
+  <div class="edit-layout">
+
+    <!-- LEFT SIDE (FORM + PROFILE PIC) -->
+    <section class="form-panel">
+      <form class="faculty-form" id="faculty-form">
+
+        <!-- PROFILE IMAGE MOVED HERE -->
+        <section class="profile-image-editor">
+          <h2>Profile Picture</h2>
+
+          <div class="image-preview-box">
+            <span>Profile Image Preview</span>
+          </div>
+
+          <label for="profile-image">Upload / Change Profile Picture</label>
+          <input
+            type="file"
+            id="profile-image"
+            name="profile-image"
+            accept="image/*"
+          />
+        </section>
+
+        <!-- NAME -->
+        <div class="row">
+          <div class="field full-width">
+            <label for="name">Name</label>
+            <input type="text" id="name" name="name" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="title">Title</label>
+            <input type="text" id="title" name="title" />
+          </div>
+
+          <div class="field">
+            <label for="campus">Campus</label>
+            <input type="text" id="campus" name="campus" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="department">Department</label>
+            <input type="text" id="department" name="department" />
+          </div>
+
+          <div class="field">
+            <label for="office-location">Office Location</label>
+            <input type="text" id="office-location" name="office-location" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" />
+          </div>
+
+          <div class="field">
+            <label for="office-phone">Office Phone</label>
+            <input type="text" id="office-phone" name="office-phone" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field full-width">
+            <label for="office-hours">Office Hours</label>
+            <input type="text" id="office-hours" name="office-hours" />
+          </div>
+        </div>
+
+        <button type="submit" class="save-btn">Save Changes</button>
+
+        <div id="status-message" class="status-message" role="alert"></div>
+      </form>
+    </section>
+
+    <!-- RIGHT SIDE (TEXT AREAS ONLY) -->
+    <section class="content-editor">
+      <section class="editor-section">
+        <h2>About Me</h2>
+        <textarea id="about-me" rows="6" placeholder="Enter Text"></textarea>
+      </section>
+
+      <section class="editor-section">
+        <h2>Education</h2>
+        <textarea id="education" rows="6" placeholder="Enter Text"></textarea>
+      </section>
+
+      <section class="editor-section">
+        <h2>Research / Publications</h2>
+        <textarea id="research" rows="6" placeholder="Enter Text"></textarea>
+      </section>
+     
+      <fieldset class="checkbox-group courses-box">
+       <legend>Courses Taught:</legend>
+       
+       <div class="courses-header">  
+         <span>Select All That Apply</span>   	
+         <span class="dropdown-arrow">▼</span>
+       </div>
+
+       <div class="courses-grid">
+         <label><input type="checkbox" /> COP 1000</label>
+         <label><input type="checkbox" /> COP 1044</label>
+
+         <label><input type="checkbox" /> COP 3505</label>
+         <label><input type="checkbox" /> COP 4504</label>
+
+         <label><input type="checkbox" /> ISM 3212</label>
+         <label><input type="checkbox" /> ISM 3232</label>
+
+         <label><input type="checkbox" /> ISM 4914</label>
+         <label><input type="checkbox" /> ISM 4915</label>
+      </div>
+    </fieldset>
+    </section>
+
+  </div>
+</main>
+
+  </div>
+
+  <script>
+    // Load current faculty data into the form on page load
+    async function loadFacultyData() {
+      try {
+        const response = await fetch('/api/faculty');
+        if (!response.ok) {
+          throw new Error(`HTTP error: ${response.status}`);
+        }
+        const data = await response.json();
+
+        if (data.error) {
+          throw new Error(data.error);
+        }
+
+        document.getElementById('name').value = data.name || '';
+        document.getElementById('title').value = data.title || '';
+        document.getElementById('campus').value = data.campus_location || '';
+        document.getElementById('department').value = data.department || '';
+        document.getElementById('office-location').value = data.office_location || '';
+        document.getElementById('email').value = data.email || '';
+        document.getElementById('office-phone').value = data.phone || '';
+        document.getElementById('office-hours').value = data.office_schedule || '';
+        document.getElementById('about-me').value = data.about_me || '';
+        document.getElementById('education').value = data.education || '';
+        document.getElementById('research').value = data.research || '';
+      } catch (err) {
+        console.error('Failed to load faculty data:', err);
+        showStatus('Failed to load current faculty data. You may still submit new data.', 'error');
+      }
+    }
+
+    // Handle form submission
+    document.getElementById('faculty-form').addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      const payload = {
+        name: document.getElementById('name').value.trim(),
+        title: document.getElementById('title').value.trim(),
+        campus_location: document.getElementById('campus').value.trim(),
+        department: document.getElementById('department').value.trim(),
+        office_location: document.getElementById('office-location').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        phone: document.getElementById('office-phone').value.trim(),
+        office_schedule: document.getElementById('office-hours').value.trim(),
+        about_me: document.getElementById('about-me').value.trim(),
+        education: document.getElementById('education').value.trim(),
+        research: document.getElementById('research').value.trim()
+      };
+
+      try {
+        const response = await fetch('/api/faculty', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+
+        if (!response.ok || result.error) {
+          throw new Error(result.error || 'Save failed');
+        }
+
+        showStatus('Faculty information saved successfully!', 'success');
+      } catch (err) {
+        console.error('Failed to save faculty data:', err);
+        showStatus(`Error saving data: ${err.message}`, 'error');
+      }
+    });
+
+    function showStatus(message, type) {
+      const el = document.getElementById('status-message');
+      el.textContent = message;
+      el.className = `status-message ${type}`;
+      el.style.display = 'block';
+      setTimeout(() => { el.style.display = 'none'; }, 5000);
+    }
+
+    loadFacultyData();
+  </script>
+</body>
+</html>
