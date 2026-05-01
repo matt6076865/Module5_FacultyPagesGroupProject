@@ -54,6 +54,19 @@ CREATE TABLE faculty_courses (
         ON DELETE CASCADE
 );
 
+-- Inserting Courses for testing
+INSERT INTO courses (course_id, course_name, credits)
+VALUES
+	('COP1000', 'Introduction to Programming', 3),
+	('COP1044', 'Python Programming', 3),
+	('COP3505', 'Advanced Programming', 3),
+	('COP4504', 'Advanced Software Programming', 3),
+	('ISM3212', 'Database Management', 3),
+	('ISM3232', 'Applied Systems Analysis', 3),
+	('ISM4914', 'Project Management', 3),
+	('ISM4915', 'Capstone Project', 3
+);
+
 USE SchoolDatabase;
 SHOW TABLES;
 
