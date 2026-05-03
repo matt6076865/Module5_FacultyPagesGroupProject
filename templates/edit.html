@@ -88,6 +88,21 @@
       gap: 10px;
       flex-wrap: wrap;
     }
+    .logout-btn {
+      padding: 8px 16px;
+      background-color: #dc3545;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+    .logout-btn:hover { opacity: 0.9; }
+    .header-right {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+    }
   </style>
 </head>
 <body>
@@ -106,11 +121,12 @@
 
       <nav class="main-nav">
         <a href="/">Home</a>
-        <a href="#">Admin</a>
         <a href="/edit" class="active">Edit</a>
       </nav>
 
-      <div></div>
+      <div class="header-right">
+        <button id="logout-btn" class="logout-btn">Logout</button>
+      </div>
      </div>
     </header>
 
@@ -258,6 +274,17 @@
   <script>
     console.log('[edit.html] Script loaded — initializing CRUD edit page...');
 
+    // -------------------------------------------------------------------------
+    // Redirect to /login on any 401 response (session expired or not logged in)
+    // -------------------------------------------------------------------------
+    function handleUnauthorized(response) {
+      if (response.status === 401) {
+        window.location.href = '/login';
+        return true;
+      }
+      return false;
+    }
+
     // Track the ID of the record currently loaded in the form.
     // null means we are in "create new" mode.
     let currentFacultyId = null;
@@ -268,6 +295,7 @@
     async function loadFacultyList(selectId) {
       try {
         const res = await fetch('/api/faculty/list');
+        if (handleUnauthorized(res)) return;
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const list = await res.json();
 
@@ -310,6 +338,7 @@
       }
       try {
         const res = await fetch(`/api/faculty?id=${id}`);
+        if (handleUnauthorized(res)) return;
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         if (data.error) throw new Error(data.error);
@@ -419,6 +448,7 @@
           });
         }
 
+        if (handleUnauthorized(response)) return;
         result = await response.json();
         if (!response.ok || result.error) throw new Error(result.error || 'Save failed');
 
@@ -446,6 +476,7 @@
 
       try {
         const response = await fetch(`/api/faculty/${currentFacultyId}`, { method: 'DELETE' });
+        if (handleUnauthorized(response)) return;
         const result = await response.json();
         if (!response.ok || result.error) throw new Error(result.error || 'Delete failed');
 
@@ -473,6 +504,14 @@
     // Boot: load the faculty list (selects the latest record by default)
     // -------------------------------------------------------------------------
     loadFacultyList(null);
+
+    // -------------------------------------------------------------------------
+    // Logout button
+    // -------------------------------------------------------------------------
+    document.getElementById('logout-btn').addEventListener('click', async function () {
+      await fetch('/logout', { method: 'POST' });
+      window.location.href = '/login';
+    });
   </script>
 </body>
 </html>

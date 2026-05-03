@@ -1,14 +1,18 @@
-from flask import Flask, render_template, request, jsonify, send_from_directory
+from flask import Flask, render_template, request, jsonify, send_from_directory, session, redirect, url_for
 from flask_cors import CORS
 import mysql.connector
 import os
 import time
 from dotenv import load_dotenv
+from functools import wraps
 
 load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
+
+# Secret key for session signing — must be set via FLASK_SECRET_KEY env var
+app.secret_key = os.getenv('FLASK_SECRET_KEY', os.urandom(24))
 
 # Database configuration — host falls back to Railway's private service domain
 # so the app can reach MySQL even when MYSQL_HOST is not explicitly injected.
@@ -76,19 +80,89 @@ def init_db(retries=5, delay=2):
                 print("All database initialization attempts failed. The app will start, but DB operations may fail.")
 
 
+# ---------------------------------------------------------------------------
+# Authentication helpers
+# ---------------------------------------------------------------------------
+
+def is_authenticated():
+    """Return True if the current session has a valid login."""
+    return session.get('authenticated') is True
+
+
+def login_required(f):
+    """Decorator that returns 401 JSON for unauthenticated API requests."""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not is_authenticated():
+            return jsonify({'error': 'Unauthorized — please log in'}), 401
+        return f(*args, **kwargs)
+    return decorated
+
+
+# ---------------------------------------------------------------------------
+# Auth routes
+# ---------------------------------------------------------------------------
+
+@app.route('/login', methods=['GET'])
+def login_page():
+    if is_authenticated():
+        return redirect(url_for('edit'))
+    return render_template('login.html')
+
+
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.get_json(silent=True) or {}
+    password = data.get('password', '')
+    admin_password = os.getenv('ADMIN_PASSWORD', '')
+
+    if not admin_password:
+        return jsonify({'error': 'Server is not configured with an admin password'}), 500
+
+    if password == admin_password:
+        session['authenticated'] = True
+        return jsonify({'success': True})
+    else:
+        return jsonify({'error': 'Invalid password'}), 401
+
+
+@app.route('/logout', methods=['POST'])
+def logout():
+    session.clear()
+    return jsonify({'success': True})
+
+
+# ---------------------------------------------------------------------------
 # Serve root-level images directory (legacy path support)
+# ---------------------------------------------------------------------------
+
 @app.route('/images/<path:filename>')
 def serve_image(filename):
     return send_from_directory('images', filename)
 
-# API Routes
+
+# ---------------------------------------------------------------------------
+# Page routes
+# ---------------------------------------------------------------------------
+
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html', authenticated=is_authenticated())
+
 
 @app.route('/edit')
 def edit():
+    if not is_authenticated():
+        return redirect(url_for('login_page'))
     return render_template('edit.html')
+
+PII_FIELDS = ('office_location', 'email', 'phone', 'office_schedule')
+
+
+def strip_pii(record):
+    """Remove PII fields from a faculty record dict for unauthenticated responses."""
+    return {k: v for k, v in record.items() if k not in PII_FIELDS}
+
 
 @app.route('/api/faculty', methods=['GET'])
 def get_faculty():
@@ -110,13 +184,14 @@ def get_faculty():
 
         if faculty:
             print(f"GET /api/faculty - returning record id={faculty.get('id')}")
-            return jsonify(faculty)
+            result = faculty if is_authenticated() else strip_pii(faculty)
+            return jsonify(result)
         else:
             if faculty_id:
                 return jsonify({'error': f'Faculty record {faculty_id} not found'}), 404
             print("GET /api/faculty - no records found, returning defaults")
             # Return default faculty data if none exists
-            return jsonify({
+            defaults = {
                 'id': None,
                 'name': 'Matt Watkins',
                 'title': 'Professor',
@@ -129,7 +204,8 @@ def get_faculty():
                 'about_me': 'Assists with all technical support for CAS faculty and staff.',
                 'education': 'He began as an adjunct instructor with St. Petersburg College in 1999...',
                 'research': 'He has earned many industry certifications...'
-            })
+            }
+            return jsonify(defaults if is_authenticated() else strip_pii(defaults))
     except Exception as e:
         print(f"GET /api/faculty - error: {e}")
         return jsonify({'error': str(e)}), 500
@@ -152,6 +228,7 @@ def list_faculty():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/faculty', methods=['POST'])
+@login_required
 def create_faculty():
     """Insert a brand-new faculty record and return it with its generated ID."""
     try:
@@ -199,6 +276,7 @@ def create_faculty():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/faculty/<int:faculty_id>', methods=['PUT'])
+@login_required
 def update_faculty(faculty_id):
     """Update an existing faculty record by ID and return the updated record."""
     try:
@@ -263,6 +341,7 @@ def update_faculty(faculty_id):
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/faculty/<int:faculty_id>', methods=['DELETE'])
+@login_required
 def delete_faculty(faculty_id):
     """Delete a faculty record by ID."""
     try:

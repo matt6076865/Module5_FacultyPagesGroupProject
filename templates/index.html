@@ -32,6 +32,35 @@
       border-radius: 4px;
       font-size: 1rem;
     }
+    .logout-btn {
+      padding: 8px 16px;
+      background-color: #dc3545;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+    .logout-btn:hover { opacity: 0.9; }
+    .header-right {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+    }
+    .pii-locked {
+      background-color: #f8f9fa;
+      border: 1px dashed #c8d8f0;
+      border-radius: 6px;
+      padding: 10px 14px;
+    }
+    .pii-notice {
+      margin: 0;
+      color: #555;
+      font-size: 0.9rem;
+    }
+    .pii-notice a {
+      color: #005fc4;
+    }
   </style>
 </head>
 
@@ -51,13 +80,22 @@
 
     <nav class="main-nav" aria-label="Primary navigation">
       <a class="active" href="/">Home</a>
-      <a href="#">Admin</a>
+      {% if authenticated %}
       <a href="/edit">Edit</a>
+      {% else %}
+      <a href="/login">Login</a>
+      {% endif %}
     </nav>
 
-    <form class="search-form" action="#" method="get">
-      <input id="faculty-search" type="search" placeholder="Faculty Search" />
-    </form>
+    <div class="header-right">
+      {% if authenticated %}
+      <button id="logout-btn" class="logout-btn">Logout</button>
+      {% else %}
+      <form class="search-form" action="#" method="get">
+        <input id="faculty-search" type="search" placeholder="Faculty Search" />
+      </form>
+      {% endif %}
+    </div>
   </div>
 </header>
 
@@ -95,6 +133,7 @@
         <p id="faculty-department">—</p>
       </div>
 
+      {% if authenticated %}
       <div class="info-group">
         <h2>Office Location</h2>
         <p id="faculty-office-location">—</p>
@@ -109,6 +148,11 @@
         <h2>Office Schedule</h2>
         <p id="faculty-schedule">—</p>
       </div>
+      {% else %}
+      <div class="info-group pii-locked">
+        <p class="pii-notice">🔒 <a href="/login">Log in</a> to view contact details &amp; office hours</p>
+      </div>
+      {% endif %}
 
       <div class="faculty-actions">
         <a href="#" class="action-btn">Office Appointments</a>
@@ -244,6 +288,15 @@
     });
 
     initPage();
+
+    // Logout button (only present when authenticated)
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', async function () {
+        await fetch('/logout', { method: 'POST' });
+        window.location.reload();
+      });
+    }
   </script>
 </body>
 </html>
