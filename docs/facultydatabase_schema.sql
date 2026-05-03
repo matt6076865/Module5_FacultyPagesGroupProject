@@ -7,7 +7,7 @@
 -- database.
 --
 -- Usage:
---   mysql -u <user> -p <database> < schema.sql
+--   mysql -u <user> -p <database> < facultydatabase_schema.sql
 --
 -- The IF NOT EXISTS guard makes it safe to run multiple times without
 -- destroying existing data.
