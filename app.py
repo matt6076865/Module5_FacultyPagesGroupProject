@@ -211,33 +211,44 @@ def update_faculty(faculty_id):
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
 
-        cursor.execute(
-            '''UPDATE faculty
-               SET name = %s, title = %s, campus_location = %s, department = %s,
-                   office_location = %s, email = %s, phone = %s,
-                   office_schedule = %s, about_me = %s, education = %s, research = %s
-               WHERE id = %s''',
-            (
-                data.get('name'),
-                data.get('title'),
-                data.get('campus_location'),
-                data.get('department'),
-                data.get('office_location'),
-                data.get('email'),
-                data.get('phone'),
-                data.get('office_schedule'),
-                data.get('about_me'),
-                data.get('education'),
-                data.get('research'),
-                faculty_id,
-            )
+        params = (
+            data.get('name'),
+            data.get('title'),
+            data.get('campus_location'),
+            data.get('department'),
+            data.get('office_location'),
+            data.get('email'),
+            data.get('phone'),
+            data.get('office_schedule'),
+            data.get('about_me'),
+            data.get('education'),
+            data.get('research'),
+            faculty_id,
         )
-        conn.commit()
+        query = (
+            'UPDATE faculty'
+            ' SET name = %s, title = %s, campus_location = %s, department = %s,'
+            '     office_location = %s, email = %s, phone = %s,'
+            '     office_schedule = %s, about_me = %s, education = %s, research = %s'
+            ' WHERE id = %s'
+        )
+        print(f"PUT /api/faculty/{faculty_id} - faculty_id={faculty_id!r} (type={type(faculty_id).__name__})")
+        print(f"PUT /api/faculty/{faculty_id} - executing: {query}")
+        print(f"PUT /api/faculty/{faculty_id} - params: {params}")
+        cursor.execute(query, params)
 
-        if cursor.rowcount == 0:
+        # IMPORTANT: read rowcount BEFORE commit — mysql.connector resets it to 0 after commit
+        rowcount = cursor.rowcount
+        print(f"PUT /api/faculty/{faculty_id} - cursor.rowcount={rowcount}")
+
+        if rowcount == 0:
+            conn.rollback()
             cursor.close()
             conn.close()
+            print(f"PUT /api/faculty/{faculty_id} - no rows matched, returning 404")
             return jsonify({'error': f'Faculty record {faculty_id} not found'}), 404
+
+        conn.commit()
 
         # Fetch and return the updated record
         cursor.execute('SELECT * FROM faculty WHERE id = %s', (faculty_id,))
@@ -259,12 +270,16 @@ def delete_faculty(faculty_id):
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute('DELETE FROM faculty WHERE id = %s', (faculty_id,))
-        conn.commit()
 
-        if cursor.rowcount == 0:
+        # Read rowcount BEFORE commit — mysql.connector resets it to 0 after commit
+        rowcount = cursor.rowcount
+        if rowcount == 0:
+            conn.rollback()
             cursor.close()
             conn.close()
             return jsonify({'error': f'Faculty record {faculty_id} not found'}), 404
+
+        conn.commit()
 
         cursor.close()
         conn.close()
