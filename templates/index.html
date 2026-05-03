@@ -7,6 +7,32 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
   <link rel="stylesheet" href="/static/style.css" />
   <link rel="stylesheet" href="/static/spc.css" />
+  <style>
+    .faculty-selector-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding: 12px 20px;
+      background-color: #f0f4ff;
+      border: 1px solid #c8d8f0;
+      border-radius: 8px;
+      margin: 20px 0 10px;
+    }
+    .faculty-selector-bar label {
+      font-weight: bold;
+      margin: 0;
+      white-space: nowrap;
+    }
+    .faculty-selector-bar select {
+      flex: 1;
+      min-width: 200px;
+      padding: 8px 10px;
+      border: 1px solid #a9a9a9;
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+  </style>
 </head>
 
 <body>
@@ -34,6 +60,14 @@
     </form>
   </div>
 </header>
+
+    <!-- FACULTY SELECTOR -->
+    <div class="faculty-selector-bar">
+      <label for="faculty-select">View Faculty:</label>
+      <select id="faculty-select">
+        <option value="">— Loading… —</option>
+      </select>
+    </div>
 
     <main class="home-page">
   <div class="home-layout">
@@ -123,42 +157,93 @@
   </div>
 
   <script>
-    async function loadFacultyData() {
+    // -------------------------------------------------------------------------
+    // Render a faculty data object into the page
+    // -------------------------------------------------------------------------
+    function displayFaculty(data) {
+      document.getElementById('faculty-name').textContent            = data.name            || '—';
+      document.getElementById('faculty-title').textContent           = data.title           || '—';
+      document.getElementById('faculty-campus').textContent          = data.campus_location || '—';
+      document.getElementById('faculty-department').textContent      = data.department      || '—';
+      document.getElementById('faculty-office-location').textContent = data.office_location || '—';
+      document.getElementById('faculty-schedule').textContent        = data.office_schedule || '—';
+      document.getElementById('faculty-about').textContent           = data.about_me        || '—';
+      document.getElementById('faculty-education').textContent       = data.education       || '—';
+      document.getElementById('faculty-research').textContent        = data.research        || '—';
+
+      const email = data.email || '';
+      const phone = data.phone || '';
+      if (email && phone) {
+        document.getElementById('faculty-contact').textContent = `${email} | ${phone}`;
+      } else {
+        document.getElementById('faculty-contact').textContent = email || phone || '—';
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // Fetch and display a faculty record by ID (or latest if no ID given)
+    // -------------------------------------------------------------------------
+    async function loadFacultyData(id) {
       try {
-        const response = await fetch('/api/faculty');
-        if (!response.ok) {
-          throw new Error(`HTTP error: ${response.status}`);
-        }
+        const url = id ? `/api/faculty?id=${id}` : '/api/faculty';
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
         const data = await response.json();
-
-        if (data.error) {
-          throw new Error(data.error);
-        }
-
-        document.getElementById('faculty-name').textContent = data.name || '—';
-        document.getElementById('faculty-title').textContent = data.title || '—';
-        document.getElementById('faculty-campus').textContent = data.campus_location || '—';
-        document.getElementById('faculty-department').textContent = data.department || '—';
-        document.getElementById('faculty-office-location').textContent = data.office_location || '—';
-        document.getElementById('faculty-schedule').textContent = data.office_schedule || '—';
-        document.getElementById('faculty-about').textContent = data.about_me || '—';
-        document.getElementById('faculty-education').textContent = data.education || '—';
-        document.getElementById('faculty-research').textContent = data.research || '—';
-
-        const email = data.email || '';
-        const phone = data.phone || '';
-        if (email && phone) {
-          document.getElementById('faculty-contact').textContent = `${email} | ${phone}`;
-        } else {
-          document.getElementById('faculty-contact').textContent = email || phone || '—';
-        }
+        if (data.error) throw new Error(data.error);
+        displayFaculty(data);
       } catch (err) {
         console.error('Failed to load faculty data:', err);
         document.getElementById('faculty-name').textContent = 'Unable to load data';
       }
     }
 
-    loadFacultyData();
+    // -------------------------------------------------------------------------
+    // Populate the faculty selector dropdown, then load the default (latest) record
+    // -------------------------------------------------------------------------
+    async function initPage() {
+      try {
+        const res = await fetch('/api/faculty/list');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const list = await res.json();
+
+        const sel = document.getElementById('faculty-select');
+        sel.innerHTML = '';
+
+        if (list.length === 0) {
+          sel.innerHTML = '<option value="">— No faculty records —</option>';
+          // Still attempt to load the default (may return placeholder data)
+          await loadFacultyData(null);
+          return;
+        }
+
+        list.forEach(f => {
+          const opt = document.createElement('option');
+          opt.value = f.id;
+          opt.textContent = `${f.name} (ID ${f.id})`;
+          sel.appendChild(opt);
+        });
+
+        // Default: select the last (highest ID) record to match original behaviour
+        const latestId = list[list.length - 1].id;
+        sel.value = latestId;
+        await loadFacultyData(latestId);
+      } catch (err) {
+        console.error('Failed to initialise faculty selector:', err);
+        // Fall back to the original "latest record" fetch
+        await loadFacultyData(null);
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // Selector change handler
+    // -------------------------------------------------------------------------
+    document.getElementById('faculty-select').addEventListener('change', async function () {
+      if (this.value) {
+        await loadFacultyData(this.value);
+      }
+    });
+
+    initPage();
   </script>
 </body>
 </html>

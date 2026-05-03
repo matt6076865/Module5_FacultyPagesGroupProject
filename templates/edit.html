@@ -25,6 +25,69 @@
       color: #721c24;
       border: 1px solid #f5c6cb;
     }
+    .faculty-selector-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding: 14px 20px;
+      background-color: #f0f4ff;
+      border: 1px solid #c8d8f0;
+      border-radius: 8px;
+      margin-bottom: 24px;
+    }
+    .faculty-selector-bar label {
+      font-weight: bold;
+      margin: 0;
+      white-space: nowrap;
+    }
+    .faculty-selector-bar select {
+      flex: 1;
+      min-width: 200px;
+      padding: 8px 10px;
+      border: 1px solid #a9a9a9;
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+    .faculty-id-badge {
+      font-size: 0.85rem;
+      color: #555;
+      white-space: nowrap;
+    }
+    .faculty-id-badge span {
+      font-weight: bold;
+      color: #005fc4;
+    }
+    .new-record-btn {
+      padding: 8px 14px;
+      background-color: #28a745;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .new-record-btn:hover { opacity: 0.9; }
+    .delete-btn {
+      align-self: flex-end;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 6px;
+      background-color: #dc3545;
+      color: #ffffff;
+      font-size: 1rem;
+      cursor: pointer;
+      margin-left: 10px;
+    }
+    .delete-btn:hover { opacity: 0.9; }
+    .form-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
   </style>
 </head>
 <body>
@@ -52,6 +115,17 @@
     </header>
 
 <main class="edit-page">
+
+  <!-- FACULTY SELECTOR BAR -->
+  <div class="faculty-selector-bar">
+    <label for="faculty-select">Editing:</label>
+    <select id="faculty-select">
+      <option value="">— Loading faculty list… —</option>
+    </select>
+    <span class="faculty-id-badge">ID: <span id="current-faculty-id">—</span></span>
+    <button type="button" class="new-record-btn" id="new-record-btn">+ New Faculty</button>
+  </div>
+
   <div class="edit-layout">
 
     <!-- LEFT SIDE (FORM + PROFILE PIC) -->
@@ -126,7 +200,10 @@
           </div>
         </div>
 
-        <button type="submit" class="save-btn">Save Changes</button>
+        <div class="form-actions">
+          <button type="submit" class="save-btn" id="save-btn">Save Changes</button>
+          <button type="button" class="delete-btn" id="delete-btn" style="display:none;">Delete Faculty</button>
+        </div>
 
         <div id="status-message" class="status-message" role="alert"></div>
       </form>
@@ -179,83 +256,211 @@
   </div>
 
   <script>
-    console.log('[edit.html] Script loaded — attaching form submit listener...');
+    console.log('[edit.html] Script loaded — initializing CRUD edit page...');
 
-    // Load current faculty data into the form on page load
-    async function loadFacultyData() {
+    // Track the ID of the record currently loaded in the form.
+    // null means we are in "create new" mode.
+    let currentFacultyId = null;
+
+    // -------------------------------------------------------------------------
+    // Populate the faculty selector dropdown
+    // -------------------------------------------------------------------------
+    async function loadFacultyList(selectId) {
       try {
-        const response = await fetch('/api/faculty');
-        if (!response.ok) {
-          throw new Error(`HTTP error: ${response.status}`);
-        }
-        const data = await response.json();
+        const res = await fetch('/api/faculty/list');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const list = await res.json();
 
-        if (data.error) {
-          throw new Error(data.error);
+        const sel = document.getElementById('faculty-select');
+        sel.innerHTML = '';
+
+        if (list.length === 0) {
+          sel.innerHTML = '<option value="">— No faculty records yet —</option>';
+          return;
         }
 
-        document.getElementById('name').value = data.name || '';
-        document.getElementById('title').value = data.title || '';
-        document.getElementById('campus').value = data.campus_location || '';
-        document.getElementById('department').value = data.department || '';
-        document.getElementById('office-location').value = data.office_location || '';
-        document.getElementById('email').value = data.email || '';
-        document.getElementById('office-phone').value = data.phone || '';
-        document.getElementById('office-hours').value = data.office_schedule || '';
-        document.getElementById('about-me').value = data.about_me || '';
-        document.getElementById('education').value = data.education || '';
-        document.getElementById('research').value = data.research || '';
+        list.forEach(f => {
+          const opt = document.createElement('option');
+          opt.value = f.id;
+          opt.textContent = `${f.name} (ID ${f.id})`;
+          sel.appendChild(opt);
+        });
+
+        // Select the requested ID, or default to the first option
+        if (selectId && list.find(f => f.id == selectId)) {
+          sel.value = selectId;
+        } else {
+          sel.value = list[0].id;
+        }
+
+        await loadFacultyData(sel.value);
       } catch (err) {
-        console.error('Failed to load faculty data:', err);
-        showStatus('Failed to load current faculty data. You may still submit new data.', 'error');
+        console.error('Failed to load faculty list:', err);
+        showStatus('Could not load faculty list.', 'error');
       }
     }
 
-    // Handle form submission
-    const facultyForm = document.getElementById('faculty-form');
-    if (facultyForm) {
-      console.log('[edit.html] Submit listener attached to #faculty-form');
-    } else {
-      console.error('[edit.html] ERROR: #faculty-form not found in DOM — submit listener NOT attached');
+    // -------------------------------------------------------------------------
+    // Load a specific faculty record into the form
+    // -------------------------------------------------------------------------
+    async function loadFacultyData(id) {
+      if (!id) {
+        clearForm();
+        return;
+      }
+      try {
+        const res = await fetch(`/api/faculty?id=${id}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        populateForm(data);
+      } catch (err) {
+        console.error('Failed to load faculty data:', err);
+        showStatus('Failed to load faculty record.', 'error');
+      }
     }
-    facultyForm && facultyForm.addEventListener('submit', async function (e) {
+
+    // -------------------------------------------------------------------------
+    // Fill form fields from a data object
+    // -------------------------------------------------------------------------
+    function populateForm(data) {
+      currentFacultyId = data.id || null;
+      document.getElementById('current-faculty-id').textContent = currentFacultyId ?? '—';
+      document.getElementById('name').value            = data.name            || '';
+      document.getElementById('title').value           = data.title           || '';
+      document.getElementById('campus').value          = data.campus_location || '';
+      document.getElementById('department').value      = data.department      || '';
+      document.getElementById('office-location').value = data.office_location || '';
+      document.getElementById('email').value           = data.email           || '';
+      document.getElementById('office-phone').value    = data.phone           || '';
+      document.getElementById('office-hours').value    = data.office_schedule || '';
+      document.getElementById('about-me').value        = data.about_me        || '';
+      document.getElementById('education').value       = data.education       || '';
+      document.getElementById('research').value        = data.research        || '';
+
+      // Show Delete button only when editing an existing record
+      document.getElementById('delete-btn').style.display = currentFacultyId ? 'inline-block' : 'none';
+      document.getElementById('save-btn').textContent = currentFacultyId ? 'Save Changes' : 'Create Faculty';
+    }
+
+    // -------------------------------------------------------------------------
+    // Clear the form for a new record
+    // -------------------------------------------------------------------------
+    function clearForm() {
+      currentFacultyId = null;
+      document.getElementById('current-faculty-id').textContent = '—';
+      document.getElementById('faculty-select').value = '';
+      ['name','title','campus','department','office-location','email',
+       'office-phone','office-hours','about-me','education','research']
+        .forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.value = '';
+        });
+      document.getElementById('delete-btn').style.display = 'none';
+      document.getElementById('save-btn').textContent = 'Create Faculty';
+    }
+
+    // -------------------------------------------------------------------------
+    // Faculty selector change
+    // -------------------------------------------------------------------------
+    document.getElementById('faculty-select').addEventListener('change', async function () {
+      if (this.value) {
+        await loadFacultyData(this.value);
+      }
+    });
+
+    // -------------------------------------------------------------------------
+    // "New Faculty" button — blank the form for a fresh insert
+    // -------------------------------------------------------------------------
+    document.getElementById('new-record-btn').addEventListener('click', function () {
+      clearForm();
+      showStatus('Form cleared — fill in details and click "Create Faculty".', 'success');
+    });
+
+    // -------------------------------------------------------------------------
+    // Form submit — PUT to update existing, POST to create new
+    // -------------------------------------------------------------------------
+    const facultyForm = document.getElementById('faculty-form');
+    facultyForm.addEventListener('submit', async function (e) {
       e.preventDefault();
-      console.log('[edit.html] Form submit intercepted — sending fetch POST to /api/faculty');
 
       const payload = {
-        name: document.getElementById('name').value.trim(),
-        title: document.getElementById('title').value.trim(),
+        name:            document.getElementById('name').value.trim(),
+        title:           document.getElementById('title').value.trim(),
         campus_location: document.getElementById('campus').value.trim(),
-        department: document.getElementById('department').value.trim(),
+        department:      document.getElementById('department').value.trim(),
         office_location: document.getElementById('office-location').value.trim(),
-        email: document.getElementById('email').value.trim(),
-        phone: document.getElementById('office-phone').value.trim(),
+        email:           document.getElementById('email').value.trim(),
+        phone:           document.getElementById('office-phone').value.trim(),
         office_schedule: document.getElementById('office-hours').value.trim(),
-        about_me: document.getElementById('about-me').value.trim(),
-        education: document.getElementById('education').value.trim(),
-        research: document.getElementById('research').value.trim()
+        about_me:        document.getElementById('about-me').value.trim(),
+        education:       document.getElementById('education').value.trim(),
+        research:        document.getElementById('research').value.trim(),
       };
 
       try {
-        const response = await fetch('/api/faculty', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
+        let response, result;
 
-        const result = await response.json();
-
-        if (!response.ok || result.error) {
-          throw new Error(result.error || 'Save failed');
+        if (currentFacultyId) {
+          // UPDATE existing record
+          console.log(`[edit.html] PUT /api/faculty/${currentFacultyId}`);
+          response = await fetch(`/api/faculty/${currentFacultyId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+        } else {
+          // CREATE new record
+          console.log('[edit.html] POST /api/faculty');
+          response = await fetch('/api/faculty', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
         }
 
-        showStatus('Faculty information saved successfully!', 'success');
+        result = await response.json();
+        if (!response.ok || result.error) throw new Error(result.error || 'Save failed');
+
+        // Refresh the selector list and re-select the saved record
+        await loadFacultyList(result.id);
+        showStatus(
+          currentFacultyId
+            ? 'Faculty record updated successfully!'
+            : `New faculty record created (ID ${result.id})!`,
+          'success'
+        );
       } catch (err) {
         console.error('Failed to save faculty data:', err);
         showStatus(`Error saving data: ${err.message}`, 'error');
       }
     });
 
+    // -------------------------------------------------------------------------
+    // Delete button
+    // -------------------------------------------------------------------------
+    document.getElementById('delete-btn').addEventListener('click', async function () {
+      if (!currentFacultyId) return;
+      const name = document.getElementById('name').value || `ID ${currentFacultyId}`;
+      if (!confirm(`Delete faculty record for "${name}"? This cannot be undone.`)) return;
+
+      try {
+        const response = await fetch(`/api/faculty/${currentFacultyId}`, { method: 'DELETE' });
+        const result = await response.json();
+        if (!response.ok || result.error) throw new Error(result.error || 'Delete failed');
+
+        showStatus(`Faculty record deleted successfully.`, 'success');
+        // Reload the list; it will auto-select the first remaining record
+        await loadFacultyList(null);
+      } catch (err) {
+        console.error('Failed to delete faculty record:', err);
+        showStatus(`Error deleting record: ${err.message}`, 'error');
+      }
+    });
+
+    // -------------------------------------------------------------------------
+    // Utility: show a timed status banner
+    // -------------------------------------------------------------------------
     function showStatus(message, type) {
       const el = document.getElementById('status-message');
       el.textContent = message;
@@ -264,7 +469,10 @@
       setTimeout(() => { el.style.display = 'none'; }, 5000);
     }
 
-    loadFacultyData();
+    // -------------------------------------------------------------------------
+    // Boot: load the faculty list (selects the latest record by default)
+    // -------------------------------------------------------------------------
+    loadFacultyList(null);
   </script>
 </body>
 </html>
